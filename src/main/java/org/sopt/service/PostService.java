@@ -1,59 +1,92 @@
 package org.sopt.service;
 
 import org.sopt.domain.Post;
+import org.sopt.dto.request.CreatePostRequest;
+import org.sopt.dto.response.CreatePostResponse;
+import org.sopt.dto.response.PostResponse;
+import org.sopt.repository.PostRepository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PostService {
-    private List<Post> postList = new ArrayList<>(); // 임시 저장소 (나중에 DB로 교체됨)
-    private Long nextId = 1L;
+    private final PostRepository postRepository = new PostRepository();
 
-    // CREATE ✅ 같이 구현
-    // 글쓰기 화면에서 "완료" 버튼을 누르면 이 메서드가 호출돼요
-    public void createPost(String title, String content, String author) {
-        try {
-            // 글쓰기 화면설계서: 제목은 필수, 최대 50자
-            if (title == null || title.isBlank()) {
-                throw new IllegalArgumentException("제목은 필수입니다!");
-            }
-            if (content == null || content.isBlank()) {
-                throw new IllegalArgumentException("내용은 필수입니다!");
-            }
-            String createdAt = java.time.LocalDateTime.now().toString();
-            Post post = new Post(nextId++, title, content, author, createdAt);
-            postList.add(post);
-            System.out.println("✅ 게시글 등록 완료!");
-        } catch (IllegalArgumentException e) {
-            System.out.println("🚫 입력 오류: " + e.getMessage());
+    // CREATE
+    public CreatePostResponse createPost(CreatePostRequest request) {
+        if (request.title == null || request.title.isBlank()) {
+            throw new IllegalArgumentException("제목은 필수입니다!");
         }
+        if (request.content == null || request.content.isBlank()) {
+            throw new IllegalArgumentException("내용은 필수입니다!");
+        }
+
+        Long id = postRepository.generateId();
+        String createdAt = LocalDateTime.now().toString();
+
+        Post post = new Post(id, request.title, request.content, request.author, createdAt);
+        postRepository.save(post);
+
+        return new CreatePostResponse(id, "✅ 게시글 등록 완료!");
     }
 
-    // READ - 전체 📝 과제
-    // 자유게시판 목록 화면에서 호출돼요
-    public void readAllPosts() {
-        // TODO: postList가 비어있으면 "등록된 게시글이 없습니다." 출력
-        // TODO: 비어있지 않으면 모든 게시글의 getInfo()를 순서대로 출력
+    // READ - 전체
+    public List<PostResponse> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<PostResponse> responses = new ArrayList<>();
+
+        for (Post post : posts) {
+            responses.add(new PostResponse(
+                    post.getId(),
+                    post.getTitle(),
+                    post.getContent()
+            ));
+        }
+
+        return responses;
     }
 
-    // READ - 단건 📝 과제
-    // 목록에서 특정 게시글을 탭하면 호출돼요 (게시글 상세 화면)
-    public void readPost(Long id) {
-        // TODO: postList에서 id가 일치하는 게시글을 찾아 getInfo() 출력
-        // TODO: 없으면 "해당 게시글을 찾을 수 없습니다." 출력
+    // READ - 단건
+    public PostResponse getPost(Long id) {
+        Post post = postRepository.findById(id);
+
+        if (post == null) {
+            throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다.");
+        }
+
+        return new PostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent()
+        );
     }
 
-    // UPDATE 📝 과제
-    // 게시글 수정 화면에서 "완료"를 누르면 호출돼요
+    // UPDATE
     public void updatePost(Long id, String newTitle, String newContent) {
-        // TODO: postList에서 id가 일치하는 게시글을 찾아 update() 호출
-        // TODO: 없으면 "해당 게시글을 찾을 수 없습니다." 출력
+        Post post = postRepository.findById(id);
+
+        if (post == null) {
+            throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다.");
+        }
+        if (newTitle == null || newTitle.isBlank()) {
+            throw new IllegalArgumentException("제목은 필수입니다!");
+        }
+        if (newContent == null || newContent.isBlank()) {
+            throw new IllegalArgumentException("내용은 필수입니다!");
+        }
+
+        post.update(newTitle, newContent);
     }
 
-    // DELETE 📝 과제
-    // 게시글 상세에서 삭제를 누르면 호출돼요
+    // DELETE
     public void deletePost(Long id) {
-        // TODO: postList에서 id가 일치하는 게시글을 제거
-        // TODO: 성공하면 "삭제 완료!", 없으면 "해당 게시글을 찾을 수 없습니다." 출력
+        Post post = postRepository.findById(id);
+
+        if (post == null) {
+            throw new IllegalArgumentException("해당 게시글을 찾을 수 없습니다.");
+        }
+
+        postRepository.delete(post);
     }
 }
