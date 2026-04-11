@@ -23,4 +23,9 @@ public class PostResponse {
     public String getContent() {
         return content;
     }
+
+    @Override
+    public String toString() {
+        return "[" + id + "] " + title + "\n" + content;
+    }
 }
