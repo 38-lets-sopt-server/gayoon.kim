@@ -1,10 +1,12 @@
 package org.sopt.repository;
 
 import org.sopt.domain.Post;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class PostRepository {
     private final List<Post> postList = new ArrayList<>();
     private Long nextId = 1L;
@@ -26,5 +28,7 @@ public class PostRepository {
         }
         return null;
     }
-    public void delete(Post post) {postList.remove(post);}
+    public boolean deleteById(Long id) {
+        return postList.removeIf(p -> p.getId().equals(id));
+    }
 }

@@ -1,31 +1,22 @@
 package org.sopt.dto.response;
 
-// 게시글 조회 응답 (서버 → 클라이언트)
-public class PostResponse {
-    private Long id;
-    private String title;
-    private String content;
+import org.sopt.domain.Post;
 
-    public PostResponse(Long id, String title, String content) {
-        this.id = id;
-        this.title = title;
-        this.content = content;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    @Override
-    public String toString() {
-        return "[" + id + "] " + title + "\n" + content;
+// 게시글 조회 응답
+public record PostResponse(
+        Long id,
+        String title,
+        String content,
+        String author,
+        String createdAt
+) {
+    public static PostResponse from(Post post) {
+        return new PostResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getAuthor(),
+                post.getCreatedAt()
+        );
     }
 }
