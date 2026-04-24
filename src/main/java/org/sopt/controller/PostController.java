@@ -34,10 +34,13 @@ public class PostController {
                 .body(ApiResponse.success("게시글 등록 완료!", response));
     }
 
-    // GET /posts
+    // GET /posts?page=0&size=10
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PostResponse>>> getAllPosts() {
-        List<PostResponse> responses = postService.getAllPosts();
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        List<PostResponse> responses = postService.getAllPosts(page, size);
 
         return ResponseEntity.ok(
                 ApiResponse.success("게시글 목록 조회 성공!", responses)

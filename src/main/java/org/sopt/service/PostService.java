@@ -41,10 +41,20 @@ public class PostService {
         return new CreatePostResponse(id);
     }
 
-    // READ - 전체
-    public List<PostResponse> getAllPosts() {
+    // READ - 전체 + Pagination
+    public List<PostResponse> getAllPosts(int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("page는 0 이상이어야 합니다.");
+        }
+
+        if (size <= 0) {
+            throw new IllegalArgumentException("size는 1 이상이어야 합니다.");
+        }
+
         return postRepository.findAll()
                 .stream()
+                .skip((long) page * size)
+                .limit(size)
                 .map(PostResponse::from)
                 .toList();
     }
