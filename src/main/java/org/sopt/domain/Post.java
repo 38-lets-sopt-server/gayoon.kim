@@ -3,7 +3,7 @@ package org.sopt.domain;
 import jakarta.persistence.*;
 
 @Entity
-public class Post {
+public class Post extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;          // 게시글 상세 화면 — 특정 게시글 식별용
@@ -15,20 +15,16 @@ public class Post {
 
     protected Post() {}  // JPA 기본 생성자
 
-    private String createdAt; // 목록, 상세 화면 — 작성 시각
-
-    public Post(User user, String title, String content, String createdAt) {
+    public Post(User user, String title, String content) {
         this.user = user;
         this.title = title;
         this.content = content;
-        this.createdAt = createdAt;
     }
 
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public String getContent() { return content; }
     public String getAuthor() { return user.getNickname();}
-    public String getCreatedAt() { return createdAt; }
 
     public void update(String title, String content) {
         this.title = title;
@@ -36,6 +32,6 @@ public class Post {
     }
 
     public String getInfo() {
-        return "[" + id + "] " + title + " - " + getAuthor() + " (" + createdAt + ")\n" + content;
+        return "[" + id + "] " + title + " - " + getAuthor() + " (" + getCreatedAt() + ")\n" + content;
     }
 }
