@@ -2,8 +2,6 @@ package org.sopt.domain;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 public class Post {
     @Id
@@ -12,7 +10,7 @@ public class Post {
     private String title;     // 목록, 상세, 글쓰기 화면 — 제목
     private String content;   // 목록(미리보기), 상세(전체) 화면 — 내용
     @ManyToOne(fetch = FetchType.LAZY)  // User : Post = 1 : N
-    @JoinColumn(name = "user_id")       // post 테이블에 user_id FK 컬럼이 생겨요
+    @JoinColumn(name = "user_id", nullable = false)       // post 테이블에 user_id FK 컬럼이 생겨요
     private User user;
 
     protected Post() {}  // JPA 기본 생성자

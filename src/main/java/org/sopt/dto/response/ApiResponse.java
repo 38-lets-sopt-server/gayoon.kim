@@ -1,5 +1,8 @@
 package org.sopt.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "공통 API 응답 DTO")
 public record ApiResponse<T>(
         boolean success,
         String message,

@@ -1,5 +1,6 @@
 package org.sopt.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.sopt.dto.request.CreatePostRequest;
 import org.sopt.dto.request.UpdatePostRequest;
 import org.sopt.dto.response.ApiResponse;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Post", description = "게시글 관련 API")
 @RestController
 @RequestMapping("/posts")
 public class PostController {
