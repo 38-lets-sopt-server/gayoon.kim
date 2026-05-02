@@ -13,7 +13,6 @@ import org.sopt.repository.PostRepository;
 import org.sopt.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -37,13 +36,11 @@ public class PostService {
 
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
-        String createdAt = LocalDateTime.now().toString();
 
         Post post = new Post(
                 user,
                 request.title(),
-                request.content(),
-                createdAt
+                request.content()
         );
 
         postRepository.save(post);
