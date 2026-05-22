@@ -7,12 +7,14 @@ import org.sopt.dto.response.MemberResponse;
 import org.sopt.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public MemberResponse join(MemberCreateRequest request) {
@@ -23,7 +25,7 @@ public class MemberService {
         Member member = new Member(
                 request.nickname(),
                 request.email(),
-                request.password()
+                passwordEncoder.encode(request.password())
         );
 
         Member savedMember = memberRepository.save(member);
