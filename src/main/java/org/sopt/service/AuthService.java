@@ -1,16 +1,20 @@
 package org.sopt.service;
 
 import lombok.RequiredArgsConstructor;
+import org.sopt.domain.AccessTokenBlacklist;
 import org.sopt.domain.Member;
 import org.sopt.domain.RefreshToken;
 import org.sopt.dto.response.MemberResponse;
 import org.sopt.dto.response.TokenResponse;
+import org.sopt.repository.AccessTokenBlacklistRepository;
 import org.sopt.repository.MemberRepository;
 import org.sopt.repository.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final AccessTokenBlacklistRepository accessTokenBlacklistRepository;
 
     @Value("${security.jwt.refresh-token-expires-in-seconds:1209600}")
     private long refreshTokenExpiresInSeconds;
@@ -73,5 +78,18 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
 
         return MemberResponse.from(member);
+    }
+
+    @Transactional
+    public void logout(Long memberId, String accessToken) {
+        refreshTokenRepository.deleteByMemberId(memberId);
+
+        LocalDateTime expiresAt = jwtService.getExpiresAt(accessToken);
+
+        if (!accessTokenBlacklistRepository.existsByToken(accessToken)) {
+            accessTokenBlacklistRepository.save(
+                    AccessTokenBlacklist.of(accessToken, expiresAt)
+            );
+        }
     }
 }
