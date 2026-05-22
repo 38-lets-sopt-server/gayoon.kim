@@ -1,7 +1,7 @@
 package org.sopt.service;
 
+import org.sopt.domain.Member;
 import org.sopt.domain.Post;
-import org.sopt.domain.User;
 import org.sopt.dto.request.CreatePostRequest;
 import org.sopt.dto.request.UpdatePostRequest;
 import org.sopt.dto.response.CreatePostResponse;
@@ -9,36 +9,36 @@ import org.sopt.dto.response.PostResponse;
 import org.sopt.exception.ErrorCode;
 import org.sopt.exception.NotFoundException;
 import org.sopt.exception.PostNotFoundException;
+import org.sopt.repository.MemberRepository;
 import org.sopt.repository.PostRepository;
-import org.sopt.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
 public class PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     public PostService(
             PostRepository postRepository,
-            UserRepository userRepository
+            MemberRepository memberRepository
     ) {
         this.postRepository = postRepository;
-        this.userRepository = userRepository;
+        this.memberRepository = memberRepository;
     }
 
     @Transactional
-    // CREATE
-    public CreatePostResponse createPost(CreatePostRequest request) {
+    public CreatePostResponse createPost(Long memberId, CreatePostRequest request) {
         validateCreateRequest(request);
 
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBER_NOT_FOUND));
 
         Post post = new Post(
-                user,
+                member,
                 request.title(),
                 request.content()
         );
@@ -48,8 +48,7 @@ public class PostService {
         return new CreatePostResponse(post.getId());
     }
 
-    // READ - 전체 + Pagination
-    @Transactional(readOnly = true)  // 조회 전용 → 더티 체킹 안 함 → 성능 최적화
+    @Transactional(readOnly = true)
     public List<PostResponse> getAllPosts(int page, int size) {
         if (page < 0) {
             throw new IllegalArgumentException("page는 0 이상이어야 합니다.");
@@ -67,7 +66,6 @@ public class PostService {
                 .toList();
     }
 
-    // READ - 단건
     @Transactional(readOnly = true)
     public PostResponse getPost(Long id) {
         Post post = postRepository.findById(id)
@@ -76,22 +74,23 @@ public class PostService {
         return PostResponse.from(post);
     }
 
-    // UPDATE
-    @Transactional  // 변경 → 더티 체킹으로 save() 없이 자동 UPDATE
-    public void updatePost(Long id, UpdatePostRequest request) {
+    @Transactional
+    public void updatePost(Long memberId, Long id, UpdatePostRequest request) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.POST_NOT_FOUND));
 
         validateUpdateRequest(request);
+        validatePostOwner(post, memberId);
 
         post.update(request.title(), request.content());
     }
 
-    // DELETE
     @Transactional
-    public void deletePost(Long id) {
+    public void deletePost(Long memberId, Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException(id));
+
+        validatePostOwner(post, memberId);
 
         postRepository.delete(post);
     }
@@ -104,10 +103,6 @@ public class PostService {
         if (request.content() == null || request.content().isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다!");
         }
-
-        if (request.userId() == null) {
-            throw new IllegalArgumentException("작성자 id는 필수입니다!");
-        }
     }
 
     private void validateUpdateRequest(UpdatePostRequest request) {
@@ -117,6 +112,12 @@ public class PostService {
 
         if (request.content() == null || request.content().isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다!");
+        }
+    }
+
+    private void validatePostOwner(Post post, Long memberId) {
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new IllegalArgumentException("게시글 작성자만 수정/삭제할 수 있습니다.");
         }
     }
 }
