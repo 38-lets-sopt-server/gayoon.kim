@@ -1,16 +1,13 @@
 package org.sopt.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.sopt.dto.request.TokenReissueRequest;
 import org.sopt.dto.response.ApiResponse;
 import org.sopt.dto.response.TokenResponse;
 import org.sopt.service.AuthService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import lombok.RequiredArgsConstructor;
-import org.sopt.service.AuthService;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +23,16 @@ public class AuthController {
             @RequestParam("password") String password
     ) {
         TokenResponse tokens = authService.login(email, password);
+
+        return ResponseEntity.ok(ApiResponse.success(tokens));
+    }
+
+    @Operation(summary = "토큰 재발급")
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponse<TokenResponse>> reissue(
+            @RequestBody TokenReissueRequest request
+    ) {
+        TokenResponse tokens = authService.reissue(request.refreshToken());
 
         return ResponseEntity.ok(ApiResponse.success(tokens));
     }
