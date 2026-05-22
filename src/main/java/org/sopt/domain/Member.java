@@ -17,6 +17,12 @@ public class Member {
 
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OAuthProvider oauthProvider;
+
+    private String socialId;
+
     protected Member() {
     }
 
@@ -24,6 +30,24 @@ public class Member {
         this.nickname = nickname;
         this.email = email;
         this.password = password;
+        this.oauthProvider = OAuthProvider.LOCAL;
+    }
+
+    private Member(String nickname, String email, OAuthProvider oauthProvider, String socialId) {
+        this.nickname = nickname;
+        this.email = email;
+        this.password = null;
+        this.oauthProvider = oauthProvider;
+        this.socialId = socialId;
+    }
+
+    public static Member createOAuthMember(
+            String nickname,
+            String email,
+            OAuthProvider oauthProvider,
+            String socialId
+    ) {
+        return new Member(nickname, email, oauthProvider, socialId);
     }
 
     public Long getId() {

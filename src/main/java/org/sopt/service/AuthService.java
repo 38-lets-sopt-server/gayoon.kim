@@ -3,7 +3,10 @@ package org.sopt.service;
 import lombok.RequiredArgsConstructor;
 import org.sopt.domain.AccessTokenBlacklist;
 import org.sopt.domain.Member;
+import org.sopt.domain.OAuthProvider;
 import org.sopt.domain.RefreshToken;
+import org.sopt.dto.response.GoogleTokenResponse;
+import org.sopt.dto.response.GoogleUserInfoResponse;
 import org.sopt.dto.response.MemberResponse;
 import org.sopt.dto.response.TokenResponse;
 import org.sopt.repository.AccessTokenBlacklistRepository;
@@ -25,6 +28,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenBlacklistRepository accessTokenBlacklistRepository;
+    private final GoogleOAuthClient googleOAuthClient;
 
     @Value("${security.jwt.refresh-token-expires-in-seconds:1209600}")
     private long refreshTokenExpiresInSeconds;
@@ -91,5 +95,45 @@ public class AuthService {
                     AccessTokenBlacklist.of(accessToken, expiresAt)
             );
         }
+    }
+
+    @Transactional
+    public TokenResponse googleLogin(String code) {
+        GoogleTokenResponse googleToken = googleOAuthClient.getToken(code);
+
+        if (googleToken == null || googleToken.accessToken() == null) {
+            throw new IllegalArgumentException("Google Access Token 발급에 실패했습니다.");
+        }
+
+        GoogleUserInfoResponse googleUser = googleOAuthClient.getUserInfo(googleToken.accessToken());
+
+        if (googleUser == null || googleUser.sub() == null) {
+            throw new IllegalArgumentException("Google 사용자 정보 조회에 실패했습니다.");
+        }
+
+        if (googleUser.emailVerified() == null || !googleUser.emailVerified()) {
+            throw new IllegalArgumentException("Google 이메일 인증이 완료되지 않은 계정입니다.");
+        }
+
+        Member member = memberRepository
+                .findByOauthProviderAndSocialId(OAuthProvider.GOOGLE, googleUser.sub())
+                .orElseGet(() -> memberRepository.save(
+                        Member.createOAuthMember(
+                                googleUser.name(),
+                                googleUser.email(),
+                                OAuthProvider.GOOGLE,
+                                googleUser.sub()
+                        )
+                ));
+
+        String accessToken = jwtService.generateAccessToken(member.getId(), member.getEmail());
+        String refreshToken = jwtService.generateRefreshToken(member.getId());
+
+        refreshTokenRepository.deleteByMemberId(member.getId());
+        refreshTokenRepository.save(
+                RefreshToken.of(member.getId(), refreshToken, refreshTokenExpiresInSeconds)
+        );
+
+        return TokenResponse.of(accessToken, refreshToken);
     }
 }

@@ -62,4 +62,14 @@ public class AuthController {
 
         return authorizationHeader.substring("Bearer ".length()).trim();
     }
+
+    @Operation(summary = "Google OAuth 로그인")
+    @PostMapping("/oauth/google")
+    public ResponseEntity<ApiResponse<TokenResponse>> googleLogin(
+            @RequestParam("code") String code
+    ) {
+        TokenResponse tokens = authService.googleLogin(code);
+
+        return ResponseEntity.ok(ApiResponse.success(tokens));
+    }
 }
