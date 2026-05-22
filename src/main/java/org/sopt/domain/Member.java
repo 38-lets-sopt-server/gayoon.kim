@@ -3,8 +3,8 @@ package org.sopt.domain;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users")  // "user"는 SQL 예약어라 테이블명을 변경해요
-public class User {
+@Table(name = "members")
+public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,29 +12,33 @@ public class User {
 
     private String nickname;
 
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String password;
 
-    protected User() {}
+    protected Member() {
+    }
 
-    public User(String nickname, String email) {
+    public Member(String nickname, String email, String password) {
         this.nickname = nickname;
         this.email = email;
+        this.password = password;
     }
 
     public Long getId() {
-        return this.id;
+        return id;
     }
 
     public String getNickname() {
-        return this.nickname;
+        return nickname;
     }
 
     public String getEmail() {
-        return this.email;
+        return email;
     }
 
-    public String getPassword() {return this.password;
+    public String getPassword() {
+        return password;
     }
 }
