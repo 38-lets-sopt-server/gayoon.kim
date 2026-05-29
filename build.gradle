@@ -42,4 +42,6 @@ dependencies {
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    implementation 'software.amazon.awssdk:s3:2.20.0'
 }
