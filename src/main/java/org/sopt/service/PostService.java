@@ -21,13 +21,16 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final S3Service s3Service;
 
     public PostService(
             PostRepository postRepository,
-            MemberRepository memberRepository
+            MemberRepository memberRepository,
+            S3Service s3Service
     ) {
         this.postRepository = postRepository;
         this.memberRepository = memberRepository;
+        this.s3Service = s3Service;
     }
 
     @Transactional
@@ -40,7 +43,8 @@ public class PostService {
         Post post = new Post(
                 member,
                 request.title(),
-                request.content()
+                request.content(),
+                request.imageKey()
         );
 
         postRepository.save(post);
@@ -62,7 +66,7 @@ public class PostService {
                 .stream()
                 .skip((long) page * size)
                 .limit(size)
-                .map(PostResponse::from)
+                .map(this::toPostResponse)
                 .toList();
     }
 
@@ -71,7 +75,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException(id));
 
-        return PostResponse.from(post);
+        return toPostResponse(post);
     }
 
     @Transactional
@@ -93,6 +97,16 @@ public class PostService {
         validatePostOwner(post, memberId);
 
         postRepository.delete(post);
+    }
+
+    private PostResponse toPostResponse(Post post) {
+        String imageUrl = null;
+
+        if (post.getImageKey() != null && !post.getImageKey().isBlank()) {
+            imageUrl = s3Service.generateDownloadUrl(post.getImageKey());
+        }
+
+        return PostResponse.from(post, imageUrl);
     }
 
     private void validateCreateRequest(CreatePostRequest request) {
