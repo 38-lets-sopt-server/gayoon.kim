@@ -4,27 +4,47 @@ import jakarta.persistence.*;
 
 @Entity
 public class Post extends BaseTimeEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;          // 게시글 상세 화면 — 특정 게시글 식별용
-    private String title;     // 목록, 상세, 글쓰기 화면 — 제목
-    private String content;   // 목록(미리보기), 상세(전체) 화면 — 내용
-    @ManyToOne(fetch = FetchType.LAZY)  // User : Post = 1 : N
-    @JoinColumn(name = "user_id", nullable = false)       // post 테이블에 user_id FK 컬럼이 생겨요
-    private User user;
+    private Long id;
 
-    protected Post() {}  // JPA 기본 생성자
+    private String title;
 
-    public Post(User user, String title, String content) {
-        this.user = user;
+    private String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
+    protected Post() {
+    }
+
+    public Post(Member member, String title, String content) {
+        this.member = member;
         this.title = title;
         this.content = content;
     }
 
-    public Long getId() { return id; }
-    public String getTitle() { return title; }
-    public String getContent() { return content; }
-    public String getAuthor() { return user.getNickname();}
+    public Long getId() {
+        return id;
+    }
+
+    public Member getMember() {
+        return member;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getAuthor() {
+        return member.getNickname();
+    }
 
     public void update(String title, String content) {
         this.title = title;

@@ -15,6 +15,7 @@ import org.sopt.dto.response.PostResponse;
 import org.sopt.service.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class PostController {
     // POST /posts
     @Operation(
             summary = "게시글 작성",
-            description = "작성자 userId, 제목, 내용을 받아 게시글을 작성합니다."
+            description = "로그인한 사용자의 Access Token을 이용해 게시글을 작성합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -56,14 +57,14 @@ public class PostController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
-                    description = "존재하지 않는 사용자",
+                    description = "존재하지 않는 회원",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(
                                     value = """
                                             {
                                               "success": false,
-                                              "message": "존재하지 않는 사용자입니다.",
+                                              "message": "존재하지 않는 회원입니다.",
                                               "data": null
                                             }
                                             """
@@ -81,7 +82,6 @@ public class PostController {
                             examples = @ExampleObject(
                                     value = """
                                             {
-                                              "userId": 1,
                                               "title": "첫 번째 게시글",
                                               "content": "게시글 내용입니다."
                                             }
@@ -89,9 +89,12 @@ public class PostController {
                             )
                     )
             )
-            @RequestBody CreatePostRequest request
+            @RequestBody CreatePostRequest request,
+            Authentication authentication
     ) {
-        CreatePostResponse response = postService.createPost(request);
+        Long memberId = Long.parseLong(authentication.getName());
+
+        CreatePostResponse response = postService.createPost(memberId, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -204,7 +207,7 @@ public class PostController {
     // PUT /posts/{id}
     @Operation(
             summary = "게시글 수정",
-            description = "게시글 id를 이용해 특정 게시글의 제목과 내용을 수정합니다."
+            description = "로그인한 사용자가 본인이 작성한 게시글의 제목과 내용을 수정합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -260,9 +263,12 @@ public class PostController {
                             )
                     )
             )
-            @RequestBody UpdatePostRequest request
+            @RequestBody UpdatePostRequest request,
+            Authentication authentication
     ) {
-        postService.updatePost(id, request);
+        Long memberId = Long.parseLong(authentication.getName());
+
+        postService.updatePost(memberId, id, request);
 
         return ResponseEntity.ok(
                 ApiResponse.success("게시글 수정 완료!", null)
@@ -272,7 +278,7 @@ public class PostController {
     // DELETE /posts/{id}
     @Operation(
             summary = "게시글 삭제",
-            description = "게시글 id를 이용해 특정 게시글을 삭제합니다."
+            description = "로그인한 사용자가 본인이 작성한 게시글을 삭제합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -311,9 +317,12 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @Parameter(description = "삭제할 게시글 id", example = "1", required = true)
-            @PathVariable Long id
+            @PathVariable Long id,
+            Authentication authentication
     ) {
-        postService.deletePost(id);
+        Long memberId = Long.parseLong(authentication.getName());
+
+        postService.deletePost(memberId, id);
 
         return ResponseEntity.ok(
                 ApiResponse.success("게시글 삭제 완료!", null)
