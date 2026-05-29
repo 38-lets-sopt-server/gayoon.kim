@@ -20,15 +20,19 @@ public record PostResponse(
         @Schema(description = "작성자 닉네임", example = "가윤")
         String author,
 
+        @Schema(description = "이미지 조회 URL", example = "https://...")
+        String imageUrl,
+
         @Schema(description = "작성 시각", example = "2026-05-01T12:00:00")
         LocalDateTime createdAt
 ) {
-    public static PostResponse from(Post post) {
+    public static PostResponse from(Post post, String imageUrl) {
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
                 post.getAuthor(),
+                imageUrl,
                 post.getCreatedAt()
         );
     }
